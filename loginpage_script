@@ -1,0 +1,500 @@
+<!-- Google Font for the quote (Just Another Hand) -->
+<link href="https://fonts.googleapis.com/css2?family=Just+Another+Hand&display=swap" rel="stylesheet">
+
+<!-- Particles.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+<style>
+  /* Reset box-sizing */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  /* Remove extra margins/padding on the login page */
+  .pagelayout-login #page,
+  .pagelayout-login #page-content,
+  .pagelayout-login #region-main,
+  body#page-login-index {
+    background-color: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* Override default theme styling for the login form container */
+  body#page-login-index .login-container .loginform {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+  /* Card styling */
+  #custom-login-container .card.loginpanel {
+    background-color: #ffffffe3; /* Light, semi-transparent white */
+    border: none !important;
+    border-radius: 10px !important;
+    box-shadow: 0 0 35px 0 rgba(154,161,171,0.15) !important;
+  }
+  #custom-login-container .card.loginpanel .card-body,
+  #custom-login-container .card.loginpanel label {
+    color: #000 !important;
+  }
+  /* 'Log in' button in red (#a31004) */
+  body#page-login-index .btn-primary {
+    background-color: #a31004 !important;
+    border-color: #a31004 !important;
+    margin-top: 3rem !important;
+    padding: .4rem;
+    font-size: .9375rem;
+  }
+  /* Particles container behind everything */
+  #particles-js {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* Daily quote styling */
+  .daily-quote {
+    position: fixed;
+    bottom: 85px;
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+    font-family: "Just Another Hand", cursive;
+    color: #fff;
+    font-size: 2rem;
+    padding: 0 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+    z-index: 9999;
+  }
+  /* Footer styling */
+  .custom-login-footer {
+    background-color: #1d1d1d;
+    color: #fff;
+    padding: 30px 20px 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    position: relative;
+    width: 100%;
+    margin-top: 2rem;
+  }
+  .custom-login-footer h5 {
+    color: #a31004;
+    font-size: 1.171875rem;
+    margin: 0 0 10px;
+  }
+  /* Force forgot password link to red (#a31004) */
+  body#page-login-index .forgetpass a {
+    color: #a31004 !important;
+  }
+  /* Ensure popovers/modals appear above the daily quote */
+  .popover,
+  .modal {
+    z-index: 10000 !important;
+  }
+  .modal-backdrop.in.show {
+    z-index: 9999 !important;
+  }
+
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Only run on /login/index.php (adjust if necessary)
+  if (window.location.pathname === "/login/index.php") {
+
+    // 1) Locate the existing login form
+    const oldForm = document.querySelector(".login-container .loginform");
+    if (!oldForm) return;
+    oldForm.className = ""; // Remove theme's default classes, if desired
+
+    // 2) Build a new container (card) with two main rows
+    const newWrapper = document.createElement("div");
+    newWrapper.id = "custom-login-container";
+    newWrapper.innerHTML = `
+      <div class="row justify-content-center" style="margin:4rem auto !important;">
+        <div class="col-11 col-md-8 col-lg-6 col-xl-5">
+          <div class="card loginpanel">
+            <div class="card-body">
+              <!-- Row 1: The logo row -->
+              <div class="row justify-content-center" style="margin-bottom: 2rem;">
+                <div class="col-12 text-center" id="logo-row">
+                  <!-- Existing logo will be moved here -->
+                </div>
+              </div>
+              <!-- Row 2: The left & right columns -->
+              <div class="row">
+                <div class="col-md-6" id="login-leftcol"></div>
+                <div class="col-md-6" id="login-rightcol">
+                  <h2 style="color: #1d2125; font-size: 18px; font-weight: normal !important; margin-bottom: 1rem;">
+                    Welcome to the Virtual Learning<br>
+                    Environment (VLE).
+                  </h2>
+                  <p style="margin-bottom: 1rem;">
+                    <a href="#troubleModal" data-toggle="modal" style="text-decoration: none; color: #a31004;">
+                      Having trouble logging in?
+                    </a>
+                  </p>
+                  <p id="lostpassword-container" style="margin-bottom: 1rem;"></p>
+                  <p id="cookies-line" style="margin-bottom: 1rem; color: #1d2125;">
+                    Cookies must be enabled in your browser
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const container = document.querySelector("#page");
+    if (container) {
+      container.insertBefore(newWrapper, container.firstChild);
+    }
+
+    // 3) Move the old login form into our new container
+    const leftCol = newWrapper.querySelector("#login-leftcol");
+    leftCol.appendChild(oldForm);
+
+    // 4) Move the existing logo into #logo-row
+    const existingLogo = oldForm.querySelector("img");
+    if (existingLogo) {
+      existingLogo.remove();
+      document.querySelector("#logo-row").appendChild(existingLogo);
+      existingLogo.style.display = "block";
+      existingLogo.style.margin = "0 auto";
+    }
+
+    // 5) Rename and move the "Forgotten your username or password?" link
+    const lostPasswordLink = document.querySelector(".login-form-forgotpassword a");
+    if (lostPasswordLink) {
+      lostPasswordLink.textContent = "Forgotten your username or password?";
+      lostPasswordLink.style.color = "#a31004";
+      lostPasswordLink.style.textDecoration = "none";
+      const lostPasswordContainer = newWrapper.querySelector("#lostpassword-container");
+      if (lostPasswordContainer) {
+        lostPasswordContainer.appendChild(lostPasswordLink);
+      }
+    }
+
+    // 6) Insert the Cookies notice with the question mark icon
+    const cookiesLine = newWrapper.querySelector("#cookies-line");
+    if (cookiesLine) {
+      cookiesLine.innerHTML = `
+        <i class="fa fa-check-circle-o"></i> Cookies must be enabled in your browser
+        <a href="#cookiesModal" data-toggle="modal" style="text-decoration: none;">
+          <i class="icon fa fa-question-circle text-info fa-fw" style="margin-left: 2px;"></i>
+        </a>
+      `;
+    }
+
+    // 6b) Create the "Cookies must be enabled" modal (no bold text)
+    const cookiesModal = document.createElement("div");
+    cookiesModal.id = "cookiesModal";
+    cookiesModal.className = "modal fade";
+    cookiesModal.tabIndex = -1;
+    cookiesModal.setAttribute("role", "dialog");
+    cookiesModal.setAttribute("aria-labelledby", "cookiesModalLabel");
+    cookiesModal.setAttribute("aria-hidden", "true");
+    cookiesModal.innerHTML = `
+      <div class="modal-dialog" role="document" style="max-width: 600px;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="cookiesModalLabel" style="font-weight: normal; color: #455a64;">
+              Cookies must be enabled in your browser
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="outline: none;">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" style="font-size: 0.9375rem; color: #333;">
+            <p>
+              Two cookies are used on this site:
+            </p>
+            <p>
+              The essential one is the session cookie, usually called MoodleSession.
+              You must allow this cookie in your browser to provide continuity
+              and to remain logged in when browsing the site. When you log out or
+              close the browser, this cookie is destroyed (in your browser and on the server).
+            </p>
+            <p>
+              The other cookie is purely for convenience, usually called MOODLEID or similar.
+              It just remembers your username in the browser. This means that when you return
+              to this site, the username field on the login page is already filled in for you.
+              It is safe to refuse this cookie; you will just have to retype your username
+              each time you log in.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="outline: none;">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(cookiesModal);
+
+    // 7) Insert the fa-lock icon inside the password field wrapper
+    const passwordWrapper = oldForm.querySelector(".toggle-sensitive-wrapper.small-screens-only.input-group");
+    if (passwordWrapper) {
+      const prepend = document.createElement("div");
+      prepend.classList.add("input-group-prepend");
+      const spanText = document.createElement("span");
+      spanText.classList.add("input-group-text");
+      const lockIcon = document.createElement("i");
+      lockIcon.classList.add("fa", "fa-lock");
+      spanText.appendChild(lockIcon);
+      prepend.appendChild(spanText);
+      if (!passwordWrapper.querySelector(".input-group-prepend")) {
+        passwordWrapper.insertBefore(prepend, passwordWrapper.firstChild);
+      }
+    }
+
+    // 8) Create the "Having trouble logging in?" modal
+    const troubleModal = document.createElement("div");
+    troubleModal.id = "troubleModal";
+    troubleModal.className = "modal fade";
+    troubleModal.tabIndex = -1;
+    troubleModal.setAttribute("role", "dialog");
+    troubleModal.setAttribute("aria-labelledby", "troubleModalLabel");
+    troubleModal.setAttribute("aria-hidden", "true");
+    troubleModal.innerHTML = `
+      <div class="modal-dialog" role="document" style="max-width: 600px;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="troubleModalLabel" style="font-weight: normal; color: #455a64;">
+              Having trouble logging in?
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="outline: none;">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" style="font-size: 0.9375rem; color: #333;">
+            <p style="margin-bottom: 0;">
+              <span style="font-size: 1.171875rem; color: #455a64; font-weight: normal;">
+                How can you access the VLE
+              </span>
+            </p>
+            <p>
+              Access to the Virtual Learning Environment (VLE) is granted to whomever has been
+              registered to any module at least once.<br>
+              To register you need to access your Student Panel (SIS), the link is under the "Links" section below.
+            </p>
+            <p style="margin-bottom: 0;">
+              <span style="font-size: 1.171875rem; color: #455a64; font-weight: normal;">
+                Credentials
+              </span>
+            </p>
+            <p>
+              <strong>Username:</strong> It is your personal email address you used to register with us.
+              Unless you’ve requested to change your email address in our records then, use the new email
+              address as username.<br>
+              <strong>Password:</strong> It is the password you received via email when you registered
+              for a module. In case you change that password, the latest password you entered is the valid one.
+            </p>
+            <p style="margin-bottom: 0;">
+              <span style="font-size: 1.171875rem; color: #455a64; font-weight: normal;">
+                Login Instructions
+              </span>
+            </p>
+            <ol>
+              <li>Type in your email address in the "Username" input field.</li>
+              <li>Type in your correct password in the "Password" input field.</li>
+              <li>Then click on the "Log in" button.</li>
+            </ol>
+            <p>
+              If you forgot your <strong>VLE</strong> password, you can reset it by using the
+              "Forgotten your username or password?" link located below.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="outline: none;">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(troubleModal);
+
+    // 9) Initialize Particles background
+    const particlesDiv = document.createElement("div");
+    particlesDiv.id = "particles-js";
+    Object.assign(particlesDiv.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      zIndex: "0",
+      pointerEvents: "none"
+    });
+    document.body.prepend(particlesDiv);
+
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 60, density: { enable: true, value_area: 800 } },
+        color: { value: "#FFFFFF" },
+        shape: { type: "circle" },
+        opacity: { value: 1, random: false },
+        size: { value: 2.5, random: true },
+        line_linked: {
+          enable: true,
+          distance: 120,
+          color: "#FFFFFF",
+          opacity: 0.6,
+          width: 1
+        },
+        move: { enable: true, speed: 2.0, out_mode: "out" }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: {
+          onhover: { enable: false },
+          onclick: { enable: false },
+          resize: true
+        }
+      },
+      retina_detect: true
+    });
+
+    // 10) Daily Quote
+    const quotes = [
+      { text: "The only people who never fail are those who never try.", from: "Ilka Chase" },
+      { text: "Failure is just another way to learn how to do something right.", from: "Marian Wright Edelman" },
+      { text: "I failed my way to success.", from: "Thomas Edison" },
+      { text: "Every failure brings with it the seed of an equivalent success.", from: "Napoleon Hill" },
+      { text: "Only those who dare to fail greatly can ever achieve greatly.", from: "John F. Kennedy" },
+      { text: "Imagination is more important than knowledge.", from: "Albert Einstein" },
+      { text: "You miss 100 percent of the shots you don't take.", from: "Wayne Gretzky" },
+      { text: "We are what we repeatedly do. Excellence is not an act, but a habit.", from: "Aristotle" },
+      { text: "If you live for weekends or vacations, your shit is broken.", from: "Gary Vaynerchuk" },
+      { text: "Opportunity is missed by most people because it is dressed in overalls and looks like work.", from: "Thomas Edison" }
+    ];
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 0);
+    const diff = now - startOfYear;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    const dailyQuote = quotes[dayOfYear % quotes.length];
+    const quoteWrapper = document.createElement("div");
+    quoteWrapper.className = "daily-quote";
+    quoteWrapper.textContent = `"${dailyQuote.text}" – ${dailyQuote.from}`;
+    document.body.appendChild(quoteWrapper);
+    document.body.style.marginBottom = "150px";
+
+    // 11) Build the Custom Footer
+    const footer = document.createElement("footer");
+    footer.style.cssText = `
+      background-color: #1d1d1d;
+      color: #dcdcdc;
+      padding: 30px 20px 10px;
+      font-size: 14px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    `;
+    footer.innerHTML = `
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="
+          display: flex;
+          flex-wrap: nowrap;
+          align-items: stretch;
+          border-bottom: 1px solid #444;
+          padding-bottom: 15px;
+          margin-bottom: 15px;
+        ">
+          <div style="flex: 1; text-align: left;">
+            Welcome to the OTHM VLE.<br>You are not logged in.
+          </div>
+          <div style="
+            text-align: left;
+            padding-left: 80px;
+            border-left: 1px solid #444;
+          ">
+            <h5 style="color: #a31004; font-size: 1.171875rem; margin: 0 0 10px;">Links</h5>
+            <div style="margin: 5px 0;">
+              <i class="fa fa-chevron-circle-right" style="color: #dcdcdc; margin-right: 5px;"></i>
+              <a href="https://www.unicaf.org/" style="color: #dcdcdc; text-decoration: none;">Main Website</a>
+            </div>
+            <div style="margin: 5px 0;">
+              <i class="fa fa-chevron-circle-right" style="color: #dcdcdc; margin-right: 5px;"></i>
+              <a href="https://sis-uos.unicaf.org/" style="color: #ccc; text-decoration: none;">Student Panel</a>
+            </div>
+            <div style="margin: 5px 0;">
+              <i class="fa fa-chevron-circle-right" style="color: #dcdcdc; margin-right: 5px;"></i>
+              <a href="https://download.moodle.org/mobile?version=2022112816.05&amp;lang=en&amp;iosappid=633359593&amp;androidappid=com.moodle.moodlemobile" style="color: #ccc; text-decoration: none;">
+                Get the Moodle App
+              </a>
+            </div>
+          </div>
+          <div style="
+            text-align: left;
+            margin-left: 90px;
+            border-left: 1px solid #444;
+            padding-left: 60px;
+          ">
+            <h5 style="color: #a31004; font-size: 1.171875rem; margin: 0 0 10px;">Contact</h5>
+            <div style="margin: 5px 0;">
+              <i class="fa fa-envelope" style="color: #dcdcdc; margin-right: 5px;"></i>
+              <a href="mailto:info@unicaf.com" style="color: #ccc; text-decoration: none;">info@unicaf.com</a>
+            </div>
+          </div>
+        </div>
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+        ">
+          <span style="font-size: .9375rem; color: darkgray;">
+            University of OTHM. Delivered in partnership with UNICAF © 2025 | All rights reserved
+          </span>
+          <span>
+            <a class="btn btn-link p-a-0" role="button"
+              data-container="body"
+              data-toggle="popover"
+              data-placement="top"
+              data-content="<div class='no-overflow'><p>This system contains information that is the property of UNICAF LTD and is for authorized use only. Unauthorized access is prohibited. Activities of users on this system are monitored. Anyone using this system expressly consents to such monitoring and is advised that if such monitoring reveals possible evidence of criminal activity, evidence of such activity may be provided to law enforcement officials.</p></div>"
+              data-html="true"
+              tabindex="0"
+              data-trigger="focus"
+              data-original-title="Terms of use"
+              style="color: #ccc; text-decoration: none;">
+              Terms of use
+            </a>
+          </span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(footer);
+
+    // 12) Adjust the quote position on scroll
+    function handleScroll() {
+      const footerRect = footer.getBoundingClientRect();
+      const footerTop = footerRect.top + window.scrollY;
+      const windowBottom = window.scrollY + window.innerHeight;
+      const offset = 85;
+      if (windowBottom >= footerTop) {
+        quoteWrapper.style.position = "absolute";
+        quoteWrapper.style.bottom = "auto";
+        quoteWrapper.style.top = (footerTop - offset) + "px";
+      } else {
+        quoteWrapper.style.position = "fixed";
+        quoteWrapper.style.top = "";
+        quoteWrapper.style.bottom = offset + "px";
+      }
+    }
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    // 13) Optionally initialize Bootstrap popovers
+    setTimeout(function(){
+      if (typeof $ !== "undefined" && $.fn && $.fn.popover) {
+        $('[data-toggle="popover"]').popover();
+      }
+    }, 1000);
+
+    // 14) Remove unwanted elements completely:
+    // Remove the entire div with class "d-flex mt-2" and the button with class "ml-auto btn btn-link"
+    document.querySelectorAll("div.d-flex.mt-2").forEach(el => el.remove());
+    document.querySelectorAll("button.ml-auto.btn.btn-link").forEach(el => el.remove());
+  }
+});
+</script>
